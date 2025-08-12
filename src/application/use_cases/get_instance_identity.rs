@@ -1,9 +1,8 @@
 use aws_config::imds::client::Client as ImdsClient;
+use sha2::{Digest, Sha256};
 use std::error::Error;
 
 use crate::domain::entities::machine_key::MachineKey;
-
-//use crate::domain::entities::machine_key::MachineKey;
 
 const PATH_INSTANCE_ID: &str = "/latest/meta-data/instance-id";
 const PATH_AMI_ID: &str = "/latest/meta-data/ami-id";
@@ -21,22 +20,35 @@ pub async fn get_instance_metadata() -> Result<MachineKey, Box<dyn Error>> {
     let local_ipv4: String = get_text(&imds, PATH_LOCAL_IPV4).await?;
 
     // 3a) MAC rápida (si sabes que solo hay una interfaz)
-    let mac_rapida: String = get_text(&imds, PATH_PRIMARY_MAC).await?;
+    //let mac_rapida: String = get_text(&imds, PATH_PRIMARY_MAC).await?;
 
     // 3b) MAC correcta asociada a tu IPv4 (si puede haber varias NICs)
     let mac_por_ip: String = find_mac_for_ip(&imds, &local_ipv4).await?;
 
+    let machine_key = calculate_machine_key(&mac_por_ip, &local_ipv4, &ami_id, &instance_id);
+
     Ok(MachineKey {
-        mac: mac_rapida,
+        mac: mac_por_ip,
         private_ip: local_ipv4,
         image_id: ami_id,
         instance_id: instance_id,
-        machin_key: mac_por_ip,
+        machin_key: machine_key,
     })
 }
 
-fn calculate_machine_key() -> String {
-    String::from("hola por el momento")
+fn calculate_machine_key(
+    mac: &String,
+    private_ip: &String,
+    image_id: &String,
+    instance_id: &String,
+) -> String {
+    let cadena = format!("{}:{}:{}:{}", mac, private_ip, image_id, instance_id);
+    let mut hasher = Sha256::new();
+    hasher.update(cadena.as_bytes());
+    let result = hasher.finalize();
+    let machine_key = format!("{:x}", result);
+
+    machine_key
 }
 
 async fn get_text(imds: &ImdsClient, path: &str) -> Result<String, Box<dyn Error>> {
@@ -63,4 +75,3 @@ async fn find_mac_for_ip(imds: &ImdsClient, ip: &str) -> Result<String, Box<dyn 
     }
     Err("No se encontró una MAC asociada a la IPv4 indicada".into())
 }
-
