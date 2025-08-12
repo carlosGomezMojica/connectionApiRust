@@ -1,6 +1,8 @@
 use aws_config::imds::client::Client as ImdsClient;
 use std::error::Error;
 
+use crate::domain::entities::machine_key::MachineKey;
+
 //use crate::domain::entities::machine_key::MachineKey;
 
 const PATH_INSTANCE_ID: &str = "/latest/meta-data/instance-id";
@@ -9,7 +11,7 @@ const PATH_LOCAL_IPV4: &str = "/latest/meta-data/local-ipv4";
 const PATH_PRIMARY_MAC: &str = "/latest/meta-data/mac";
 const PATH_MACS: &str = "/latest/meta-data/network/interfaces/macs/";
 
-pub async fn get_instance_metadata() -> Result<(), Box<dyn Error>> {
+pub async fn get_instance_metadata() -> Result<MachineKey, Box<dyn Error>> {
     // 1) Crear el cliente IMDS (usa IMDSv2 con token de forma transparente)
     let imds = ImdsClient::builder().build();
 
@@ -24,14 +26,13 @@ pub async fn get_instance_metadata() -> Result<(), Box<dyn Error>> {
     // 3b) MAC correcta asociada a tu IPv4 (si puede haber varias NICs)
     let mac_por_ip: String = find_mac_for_ip(&imds, &local_ipv4).await?;
 
-    // Ejemplo: úsalo como necesites (evita loguear sensibles en producción)
-    println!("instance_id={}", instance_id);
-    println!("ami_id={}", ami_id);
-    println!("local_ipv4={}", local_ipv4);
-    println!("mac_rapida={}", mac_rapida);
-    println!("mac_por_ip={}", mac_por_ip);
-
-    Ok(())
+    Ok(MachineKey {
+        mac: mac_rapida,
+        private_ip: local_ipv4,
+        image_id: ami_id,
+        instance_id: instance_id,
+        machin_key: mac_por_ip,
+    })
 }
 
 fn calculate_machine_key() -> String {
