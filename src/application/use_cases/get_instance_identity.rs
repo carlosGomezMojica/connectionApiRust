@@ -7,7 +7,7 @@ use crate::domain::entities::machine_key::MachineKey;
 const PATH_INSTANCE_ID: &str = "/latest/meta-data/instance-id";
 const PATH_AMI_ID: &str = "/latest/meta-data/ami-id";
 const PATH_LOCAL_IPV4: &str = "/latest/meta-data/local-ipv4";
-const PATH_PRIMARY_MAC: &str = "/latest/meta-data/mac";
+//const PATH_PRIMARY_MAC: &str = "/latest/meta-data/mac";
 const PATH_MACS: &str = "/latest/meta-data/network/interfaces/macs/";
 
 pub async fn get_instance_metadata() -> Result<MachineKey, Box<dyn Error>> {
@@ -32,7 +32,7 @@ pub async fn get_instance_metadata() -> Result<MachineKey, Box<dyn Error>> {
         private_ip: local_ipv4,
         image_id: ami_id,
         instance_id: instance_id,
-        machin_key: machine_key,
+        machine_key: machine_key,
     })
 }
 

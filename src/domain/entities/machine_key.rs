@@ -4,5 +4,5 @@ pub struct MachineKey {
     pub private_ip: String,
     pub image_id: String,
     pub instance_id: String,
-    pub machin_key: String,
+    pub machine_key: String,
 }
